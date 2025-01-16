@@ -1,7 +1,4 @@
 // new AI
-const random = function (max) {
-    return Math.floor(Math.random() * max);
-};
 const levenshteinDistance = function (str1, str2) {
     const len1 = str1.length;
     const len2 = str2.length;
@@ -23,51 +20,89 @@ const levenshteinDistance = function (str1, str2) {
 
     return dp[len1][len2];
 };
+
 const similarityStr = function (str1, str2) {
-    const distance = this.levenshteinDistance(str1, str2);
+    const distance = levenshteinDistance(str1, str2);
     const maxLen = Math.max(str1.length, str2.length);
-    const precision = (1 - distance / maxLen).toFixed(2);
-    if (precision >= 0.5) {
-        return true;
-    } else {
-        return false;
-    }
+    return 1 - distance / maxLen;
 };
-const similarityNmb = function (num1, num2, tolerance) {
-    return Math.abs(num1 - num2) <= tolerance;
+
+const similarityObj = function (obj1, obj2) {
+    let score = 0;
+    let keys = Object.keys(obj1);
+
+    keys.forEach((key) => {
+        if (typeof obj1[key] === "string") {
+            score += similarityStr(obj1[key], obj2[key] || "") * 10;
+        } else if (typeof obj1[key] === "number") {
+            score += 1 / (1 + Math.abs(obj1[key] - (obj2[key] || 0)));
+        } else if (typeof obj1[key] === "boolean") {
+            score += obj1[key] === obj2[key] ? 1 : 0;
+        }
+    });
+
+    return score / keys.length;
 };
-function similarityBool(bool1, bool2) {
-    return bool1 == bool2;
-}
-const candidates = function (candidats, obj) {};
-const study = function (candidats, obj, positiv, negativ) {};
+
+const study = function (candidates, situation, isPositive) {
+    candidates.forEach((candidate) => {
+        if (!this.database[candidate]) {
+            this.database[candidate] = { positive: [], negative: [] };
+        }
+
+        if (isPositive) {
+            this.database[candidate].positive.push(situation);
+        } else {
+            this.database[candidate].negative.push(situation);
+        }
+    });
+};
+
+const candidates = function (candidates, situation) {
+    return candidates.map((candidate) => {
+        const candidateData = this.database[candidate] || {
+            positive: [],
+            negative: [],
+        };
+
+        let positiveScore = candidateData.positive.reduce((sum, pos) => {
+            return sum + similarityObj(pos, situation);
+        }, 0);
+
+        let negativeScore = candidateData.negative.reduce((sum, neg) => {
+            return sum + similarityObj(neg, situation);
+        }, 0);
+
+        const rating = positiveScore - negativeScore;
+
+        return {
+            name: candidate,
+            rating: Math.round(rating * 100) / 100,
+        };
+    });
+};
+
 const answer = function (candidates) {
     if (!candidates.length) {
         return null;
     }
+
     let biggest = candidates[0];
     candidates.forEach((element) => {
         if (element.rating > biggest.rating) {
             biggest = element;
         }
     });
-    let range = biggest.rating - biggest.rating / 5;
-    const eligibleCandidates = candidates.filter(
-        (element) => element.rating >= range
-    );
-    eligibleCandidates.push(JSON.parse(JSON.stringify(biggest)));
-    const index = this.random(eligibleCandidates.length);
-    return eligibleCandidates[index]?.name || null;
+
+    return biggest.name;
 };
+
 const AI = function () {
-    this.candidates = candidates;
+    this.database = {};
     this.study = study;
+    this.candidates = candidates;
     this.answer = answer;
-    this.similarityBool = similarityBool;
-    this.similarityNmb = similarityNmb;
-    this.similarityStr = similarityStr;
-    this.levenshteinDistance = levenshteinDistance;
-    this.random = random;
-    this.database = [];
+    this.similarityObj = similarityObj;
 };
+
 export { AI };
